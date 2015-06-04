@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:fab="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+    <include layout="@layout/padding" />
+    <com.temnogrudova.locus.scrollingslidingtabtoolbar.observablescrollview.ObservableRecyclerView
+        android:id="@+id/scroll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scrollbars="vertical">
+    </com.temnogrudova.locus.scrollingslidingtabtoolbar.observablescrollview.ObservableRecyclerView>
+    </LinearLayout>
+    <com.github.clans.fab.FloatingActionButton
+        android:id="@+id/fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|right"
+        android:layout_marginBottom="16dp"
+        android:layout_marginRight="15dp"
+        android:src="@drawable/ic_plus_white_24dp"
+        app:fab_showAnimation="@anim/fab_scale_up"
+        app:fab_hideAnimation="@anim/fab_scale_down"
+        fab:fab_colorNormal="@color/ColorFab"
+        fab:fab_colorPressed="@color/ColorPagerAccent"
+        fab:fab_colorRipple="#99FFFFFF"/>
+</FrameLayout>
