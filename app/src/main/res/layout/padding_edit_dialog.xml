@@ -1,0 +1,80 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:background="@color/ColorPrimary"
+    android:layout_height="?attr/actionBarSize"
+    android:minHeight="?attr/actionBarSize"
+    android:orientation="horizontal">
+
+    <com.andexert.library.RippleView
+        android:id="@+id/rvBack"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:rv_centered="true"
+        app:rv_rippleDuration ="200"
+        android:layout_alignParentBottom="true">
+        <ImageView
+            android:id="@+id/ivClose"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_arrow_left_white_24dp"
+            android:layout_margin="16dp"/>
+    </com.andexert.library.RippleView>
+
+    <TextView
+        android:id="@+id/dialog_toolbar_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="72dp"
+        android:layout_marginBottom="16dp"
+        android:textColor="@android:color/white"
+        android:textSize ="18sp"
+        android:layout_alignParentEnd="false"
+        android:layout_alignParentStart="false"
+        android:layout_alignParentBottom="true"/>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true">
+    <com.andexert.library.RippleView
+        android:id="@+id/rvDelete"
+        android:layout_width="?android:actionBarSize"
+        android:layout_height="?android:actionBarSize"
+        app:rv_centered="true"
+        app:rv_rippleDuration ="200"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true">
+
+    <ImageView
+        android:id="@+id/ivDelete"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_delete_white_24dp"
+        android:layout_marginBottom="16dp"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentBottom="true"/>
+    </com.andexert.library.RippleView>
+    <com.andexert.library.RippleView
+        android:id="@+id/rvEdit"
+        android:layout_width="?android:actionBarSize"
+        android:layout_height="?android:actionBarSize"
+        android:layout_alignParentRight="true"
+        app:rv_centered="true"
+        app:rv_rippleDuration ="200">
+
+        <ImageView
+            android:id="@+id/ivEdit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_pencil_white_24dp"
+            android:layout_marginBottom="16dp"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentBottom="true"/>
+    </com.andexert.library.RippleView>
+    </LinearLayout>
+</RelativeLayout>

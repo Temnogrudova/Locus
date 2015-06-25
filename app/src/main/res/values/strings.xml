@@ -10,15 +10,19 @@
     <string name="drawer_item_list">List</string>
     <string name="drawer_item_settings">Settings</string>
 
-    <string name="screen_one">Screen one</string>
-    <string name="screen_two">Screen two</string>
-    <string name="screen_three">Screen three</string>
-    <string name="screen_four">Screen four</string>
     <string name="tab_1">Category</string>
     <string name="tab_2">Notification</string>
     <string name="tv_done">DONE</string>
+    <string name="quit">Quit</string>
     <string name="tv_add_category">Add Category</string>
+    <string name="tv_edit_category">Edit Category</string>
     <string name="tv_add_notification">Add Notification</string>
+    <string name="tv_edit_notification">Edit Notification</string>
+    <string name="switch_reminder">Reminder</string>
+    <string name="switch_address_current_gps">Current position</string>
+    <string name="switch_is_show_notifications">Show notifications on map</string>
+    <string name="checkbox_disable">Disable Locus</string>
+
 
 
 </resources>

@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ColorPrimary">#009688</color>
-    <color name="ColorPrimaryDark">#80CBC4</color>
+    <color name="ColorPrimary">#4DB6AC</color>
+    <color name="ColorPrimaryDark">#009688</color>
     <color name="ColorFab">#FF8A65</color>
-
     <color name="ColorPagerAccent">#FFAB91</color>
 
-    <color name="material_drawer_primary">#26A69A</color>
+    <color name = "ColorPrompt">#808080</color>
 
 </resources>

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/dialog_add"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white"
+    android:orientation="vertical">
+    <include
+        android:id="@+id/dialog_toolbar"
+        layout="@layout/padding_add_dialog" />
+
+    <ScrollView
+        android:id="@+id/scrollDialog"
+        android:layout_width="fill_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:orientation="vertical">
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/llNotificationTitle"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_gravity="center" android:orientation="vertical"  >
+
+        <TextView
+            android:layout_margin="16dp"
+            android:id="@+id/tvCategoryTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/ColorPrompt"
+            android:visibility="invisible"
+            android:text="Category title"/>
+
+        <EditText
+            android:id="@+id/etCategoryTitle"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            android:layout_width="match_parent"  android:layout_height="wrap_content"
+            android:imeOptions="actionDone"
+            android:hint="Category title">
+            <requestFocus />
+        </EditText>
+    </LinearLayout>
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/llReminder"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_gravity="center" android:orientation="horizontal"  >
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:layout_marginStart="50dp"
+            android:layout_marginTop="25dp"
+            android:src="@drawable/ic_bell_grey600_36dp"/>
+        <TextView
+            android:id="@+id/tvReminder"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="@string/switch_reminder"
+            android:layout_marginStart="34dp"
+            android:layout_marginTop="25dp"
+            android:layout_weight="1" />
+        <android.support.v7.widget.SwitchCompat
+            android:id="@+id/switchReminder"
+            android:checked="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="16dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginStart="50dp"
+            android:layout_marginTop="25dp"
+            app:showText="false"/>
+    </LinearLayout>
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/llCurrentGPS"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_gravity="center" android:orientation="horizontal"  >
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:layout_marginStart="50dp"
+            android:layout_marginTop="25dp"
+            android:src="@drawable/ic_map_marker_off_grey600_24dp"/>
+        <TextView
+            android:id="@+id/tvShowOnMap"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="@string/switch_is_show_notifications"
+            android:layout_marginStart="34dp"
+            android:layout_marginTop="25dp"
+            android:layout_weight="1" />
+        <android.support.v7.widget.SwitchCompat
+            android:id="@+id/switchShowOnMap"
+            android:checked="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="16dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginStart="50dp"
+            android:layout_marginTop="25dp"
+            app:showText="false"/>
+    </LinearLayout>
+    </LinearLayout>
+    </ScrollView>
+</LinearLayout>
+

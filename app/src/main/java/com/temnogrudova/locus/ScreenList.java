@@ -22,13 +22,13 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.view.ViewPager;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.Toast;
 
 import com.github.clans.fab.FloatingActionButton;
 import com.nineoldandroids.view.ViewHelper;
@@ -46,7 +46,13 @@ import com.temnogrudova.locus.scrollingslidingtabtoolbar.slidingtabs.SlidingTabL
  * Scrolling techniques are basically the same as ViewPagerTab2Activity.
  */
 public class ScreenList extends Fragment implements ObservableScrollViewCallbacks {
-    public static final String FRAGMENT_TAG = "fragment";
+
+    public interface onFabClickListener {
+        public void onAddCategory();
+        public void onAddNotification(String parent);
+    }
+
+    onFabClickListener FabClickListener;
 
     private TouchInterceptionFrameLayout mInterceptionLayout;
     private ViewPager mPager;
@@ -57,17 +63,25 @@ public class ScreenList extends Fragment implements ObservableScrollViewCallback
     private Activity activity;
     private FloatingActionButton mFab;
 
+    public ScreenList() {
+
+    }
+
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         this.activity = activity;
+        try {
+            FabClickListener = (onFabClickListener) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(activity.toString() + " must implement onSomeEventListener");
+        }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         ((MainActivity) getActivity()).getSupportActionBar().setTitle("List");
         View view = inflater.inflate(R.layout.screen_list, container, false);
-
 
         mPagerAdapter = new NavigationAdapter(getChildFragmentManager());
         mPager = (ViewPager) view.findViewById(R.id.pager);
@@ -91,10 +105,10 @@ public class ScreenList extends Fragment implements ObservableScrollViewCallback
                 int position = mPager.getCurrentItem();
                 switch (position) {
                     case 0:
-                        Toast.makeText(v.getContext(), "Yes!", Toast.LENGTH_SHORT).show();
+                        FabClickListener.onAddCategory();
                         break;
                     case 1:
-                        Toast.makeText(v.getContext(), "No!", Toast.LENGTH_SHORT).show();
+                        FabClickListener.onAddNotification("list");
                         break;
                 }
             }
@@ -102,6 +116,25 @@ public class ScreenList extends Fragment implements ObservableScrollViewCallback
 
 
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        getView().setFocusableInTouchMode(true);
+        getView().requestFocus();
+        getView().setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+
+                if (event.getAction() == KeyEvent.ACTION_UP && keyCode == KeyEvent.KEYCODE_BACK){
+                    getFragmentManager().beginTransaction().replace(R.id.content_frame, new ScreenMap()).addToBackStack("").commit();
+                    return true;
+                }
+                return false;
+            }
+        });
     }
 
     @Override
@@ -311,4 +344,5 @@ public class ScreenList extends Fragment implements ObservableScrollViewCallback
         super.onPause();
         showToolbar();
     }
-}
+
+    }

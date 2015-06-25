@@ -16,6 +16,7 @@
 
 package com.temnogrudova.locus;
 
+import android.app.Notification;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -23,23 +24,22 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import com.github.clans.fab.FloatingActionButton;
-import com.temnogrudova.locus.scrollingslidingtabtoolbar.RecyclerAdapter;
 import com.temnogrudova.locus.scrollingslidingtabtoolbar.observablescrollview.ObservableRecyclerView;
-import com.temnogrudova.locus.scrollingslidingtabtoolbar.observablescrollview.ObservableScrollViewCallbacks;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class TabNotifications extends Fragment {
     private int mScrollOffset = 4;
     private FloatingActionButton mFab;
+    ObservableRecyclerView recyclerView;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_recyclerview, container, false);
 
-        final ObservableRecyclerView recyclerView = (ObservableRecyclerView) view.findViewById(R.id.scroll);
+        recyclerView = (ObservableRecyclerView) view.findViewById(R.id.scroll);
         Fragment parentFragment = getParentFragment();
         mFab =(FloatingActionButton) parentFragment.getView().findViewById(R.id.fab);
 
@@ -60,28 +60,34 @@ public class TabNotifications extends Fragment {
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recyclerView.setHasFixedSize(false);
-        RecyclerAdapter recyclerAdapter = new RecyclerAdapter(createItemList());
-        recyclerView.setAdapter(recyclerAdapter);
-/*
-        mFab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(v.getContext(), "No!", Toast.LENGTH_SHORT).show();
-            }
-        });
-        */
+        updateNotificationRecyclerView();
+
         return view;
     }
-   private ArrayList<CardViewItem> createItemList() {
-       ArrayList<CardViewItem> cardViewItemArrayList = new ArrayList<CardViewItem>();
-       int num = 100;
-       for (int i = 1; i <= num; i++) {
-           CardViewItem cardViewItem = new CardViewItem();
-           cardViewItem.setItemIcon(R.drawable.ic_map_marker);
-           cardViewItem.setItemText("Notification"+ " "+ i);
-           cardViewItem.setItemSubText("subNotification"+ " "+ i);
-           cardViewItemArrayList.add(cardViewItem);
-       }
-       return cardViewItemArrayList;
-   }
+
+    public void updateNotificationRecyclerView() {
+        ArrayList<NotificationItem> notificationDataArrayList = new ArrayList<NotificationItem>();
+        notificationDataArrayList = MainActivity.dbM.getNotificationItems();
+
+        List<Integer> list = new ArrayList<Integer>();
+        ArrayList<CategoryItem> categoryItems = MainActivity.dbM.getCategoryItems();
+        for (CategoryItem categoryItem:categoryItems){
+            int i =MainActivity.dbM.getCategoryId(categoryItem.getItemTitle());
+            list.add(i);
+        }
+        for(int i = 0; i<notificationDataArrayList.size();i++){
+            if(notificationDataArrayList.get(i).getItemCategory()!=null) {
+                int id = Integer.parseInt(notificationDataArrayList.get(i).getItemCategory());
+                for(int y = 0; y<list.size();y++){
+                    if (list.get(y) == id){
+                        notificationDataArrayList.get(i).setItemCategory(categoryItems.get(y).getItemTitle());
+                    }
+                }
+            }
+        }
+        if (!(notificationDataArrayList==null)) {
+            NotificationRecyclerAdapter notificationRecyclerAdapter = new NotificationRecyclerAdapter(notificationDataArrayList);
+            recyclerView.setAdapter(notificationRecyclerAdapter);
+        }
+    }
 }

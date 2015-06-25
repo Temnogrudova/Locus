@@ -18,40 +18,49 @@ package com.temnogrudova.locus;
 
 
 import android.app.Activity;
-import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.FrameLayout;
-import android.widget.ImageButton;
-import android.widget.Toast;
 
 import com.github.clans.fab.FloatingActionButton;
-import com.nineoldandroids.view.ViewHelper;
-import com.nineoldandroids.view.ViewPropertyAnimator;
-import com.temnogrudova.locus.scrollingslidingtabtoolbar.RecyclerAdapter;
+import com.temnogrudova.locus.database.dbManager;
 import com.temnogrudova.locus.scrollingslidingtabtoolbar.observablescrollview.ObservableRecyclerView;
-import com.temnogrudova.locus.scrollingslidingtabtoolbar.observablescrollview.ObservableScrollView;
-import com.temnogrudova.locus.scrollingslidingtabtoolbar.observablescrollview.ObservableScrollViewCallbacks;
-import com.temnogrudova.locus.scrollingslidingtabtoolbar.observablescrollview.ScrollState;
-import com.temnogrudova.locus.scrollingslidingtabtoolbar.observablescrollview.ScrollUtils;
 
 import java.util.ArrayList;
 
 public class TabCategories extends Fragment {
+    dbManager dbM;
     private int mScrollOffset = 4;
     private FloatingActionButton mFab;
+    ObservableRecyclerView recyclerView;
+    Activity activity;
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        this.activity = activity;
+    }
+
+    public TabCategories() {
+
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         final View view = inflater.inflate(R.layout.fragment_recyclerview, container, false);
-
-        final ObservableRecyclerView recyclerView = (ObservableRecyclerView) view.findViewById(R.id.scroll);
+        dbM = new dbManager(getActivity());
+        recyclerView = (ObservableRecyclerView) view.findViewById(R.id.scroll);
         Fragment parentFragment = getParentFragment();
         mFab =(FloatingActionButton) parentFragment.getView().findViewById(R.id.fab);
 
@@ -70,30 +79,39 @@ public class TabCategories extends Fragment {
         });
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recyclerView.setHasFixedSize(false);
-        RecyclerAdapter recyclerAdapter = new RecyclerAdapter(createItemList());
-        recyclerView.setAdapter(recyclerAdapter);
-        /*
-        mFab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(v.getContext(), "YES!", Toast.LENGTH_SHORT).show();
-            }
-        });
-        */
+        try {
+            updateCategoryRecyclerView();
+        }
+        catch (NullPointerException e){
+
+        }
+
         return view;
     }
 
-    private ArrayList<CardViewItem> createItemList() {
-        ArrayList<CardViewItem> cardViewItemArrayList = new ArrayList<CardViewItem>();
-        int num = 100;
-        for (int i = 1; i <= num; i++) {
-            CardViewItem cardViewItem = new CardViewItem();
-            cardViewItem.setItemIcon(R.drawable.ic_folder);
-            cardViewItem.setItemText("Categories"+ " "+ i);
-            cardViewItem.setItemSubText("subCategories"+ " "+ i);
-            cardViewItemArrayList.add(cardViewItem);
+    private void updateCategoryRecyclerView() {
+        ArrayList<CategoryItem> categoryDataArrayList = new ArrayList<CategoryItem>();
+        categoryDataArrayList = dbM.getCategoryItems();
+        ArrayList<NotificationItem> categoryNotificationsDataArrayList = new ArrayList<NotificationItem>();
+
+        ArrayList<RecyclerViewItem> categoryArrayList = new ArrayList<RecyclerViewItem>();
+        for(CategoryItem categoryItem:categoryDataArrayList){
+            RecyclerViewItem recyclerViewItem = new RecyclerViewItem();
+            recyclerViewItem.setItemText(categoryItem.getItemTitle());
+            categoryNotificationsDataArrayList = dbM.getCategoryNotificationsItems(categoryItem.getItemTitle());
+            recyclerViewItem.setItemSubText(String.valueOf(categoryNotificationsDataArrayList.size()) +" notifications");
+            categoryArrayList.add(recyclerViewItem);
         }
-        return cardViewItemArrayList;
+
+        if (!(categoryDataArrayList==null)) {
+            CategoryRecyclerAdapter categoryRecyclerAdapter = new CategoryRecyclerAdapter(categoryArrayList, categoryDataArrayList);
+            recyclerView.setAdapter(categoryRecyclerAdapter);
+        }
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        dbM.close();
+    }
 }

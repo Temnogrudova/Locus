@@ -1,14 +1,190 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:fab="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/dialog_add"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-    <include layout="@layout/padding_dialog" />
+    android:layout_height="match_parent"
+    android:background="@android:color/white"
+    android:orientation="vertical">
+    <include
+        android:id="@+id/dialog_toolbar"
+        layout="@layout/padding_add_dialog" />
+
+    <ScrollView
+        android:id="@+id/scrollDialog"
+        android:layout_width="fill_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:orientation="vertical">
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/llNotificationTitle"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_gravity="center" android:orientation="vertical"  >
+
+        <TextView
+            android:layout_margin="16dp"
+            android:id="@+id/tvNotificationTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/ColorPrompt"
+            android:visibility="invisible"
+            android:text="Notification title"/>
+
+        <EditText
+            android:id="@+id/etNotificationTitle"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            android:layout_width="match_parent"  android:layout_height="wrap_content"
+            android:imeOptions="actionDone"
+            android:hint="Notification title">
+            <requestFocus />
+        </EditText>
+    </LinearLayout>
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/llReminder"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_gravity="center" android:orientation="horizontal"  >
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:layout_marginStart="50dp"
+            android:layout_marginTop="25dp"
+            android:src="@drawable/ic_bell_grey600_36dp"/>
+        <TextView
+            android:id="@+id/tvReminder"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="@string/switch_reminder"
+            android:layout_marginStart="34dp"
+            android:layout_marginTop="25dp"
+            android:layout_weight="1" />
+        <android.support.v7.widget.SwitchCompat
+            android:id="@+id/switchReminder"
+            android:checked="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="16dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginStart="50dp"
+            android:layout_marginTop="25dp"
+            app:showText="false"/>
+    </LinearLayout>
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/llCurrentGPS"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_gravity="center" android:orientation="horizontal"  >
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:layout_marginStart="50dp"
+            android:layout_marginTop="25dp"
+            android:src="@drawable/ic_crosshairs_gps_grey600_24dp"/>
+        <TextView
+            android:id="@+id/tvCurrentGPS"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="@string/switch_address_current_gps"
+            android:layout_marginStart="34dp"
+            android:layout_marginTop="25dp"
+            android:layout_weight="1" />
+        <android.support.v7.widget.SwitchCompat
+            android:id="@+id/switchCurrentGPS"
+            android:checked="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="16dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginStart="50dp"
+            android:layout_marginTop="25dp"
+            app:showText="false"/>
+    </LinearLayout>
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/llReminderAddress"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_gravity="center" android:orientation="horizontal"
+        android:visibility="gone">
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:layout_marginStart="50dp"
+            android:layout_marginTop="25dp"
+            android:src="@drawable/ic_map_marker_grey600_24dp"/>
+        <AutoCompleteTextView
+            android:id="@+id/etReminderAddress"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_marginStart="30dp"
+            android:layout_marginTop="25dp"
+            android:layout_marginRight="16dp"
+            android:layout_weight="1"
+            android:dropDownHeight="150dp"
+            android:imeOptions="actionDone"
+            android:hint="Add location"/>
+
+    </LinearLayout>
     <LinearLayout
+        android:id="@+id/llContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/llCategory"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_gravity="center" android:orientation="horizontal"  >
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:layout_marginStart="50dp"
+            android:layout_marginTop="25dp"
+            android:src="@drawable/ic_folder_grey600_24dp"/>
+        <Spinner
+            android:id="@+id/spCategory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_marginStart="30dp"
+            android:layout_marginTop="25dp"
+            android:layout_marginRight="16dp"
+            android:layout_weight="1" />
+    </LinearLayout>
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/llNote"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_gravity="center" android:orientation="horizontal"
+        android:focusableInTouchMode="true">
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:layout_marginStart="50dp"
+            android:layout_marginTop="25dp"
+            android:src="@drawable/ic_comment_text_outline_grey600_24dp"/>
+        <EditText
+            android:id="@+id/etNote"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_marginStart="30dp"
+            android:layout_marginTop="25dp"
+            android:layout_marginRight="16dp"
+            android:layout_weight="1"
+            android:imeOptions="actionDone"
+            android:hint="Add note"/>
+    </LinearLayout>
+    </LinearLayout>
+    </LinearLayout>
+    </ScrollView>
 </LinearLayout>
-</FrameLayout>
+

@@ -7,6 +7,7 @@
         android:id="@+id/action_crosshairs_gps"
         android:orderInCategory="200"
         android:title="Search"
+        android:visible="true"
         android:icon="@drawable/ic_crosshairs_gps"
         app:showAsAction="ifRoom"
         ></item>

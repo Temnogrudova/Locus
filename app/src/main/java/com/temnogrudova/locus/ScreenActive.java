@@ -1,16 +1,16 @@
 package com.temnogrudova.locus;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import com.github.clans.fab.FloatingActionButton;
-import com.temnogrudova.locus.scrollingslidingtabtoolbar.RecyclerAdapter;
 
 import java.util.ArrayList;
 
@@ -18,9 +18,26 @@ import java.util.ArrayList;
  * Created by 123 on 12.05.2015.
  */
 public class ScreenActive extends Fragment {
+    public interface onFabClickListener {
+        public void onAddNotification(String parent);
+    }
+    onFabClickListener FabClickListener;
+
     private int mScrollOffset = 4;
+    Activity activity;
     private FloatingActionButton mFab;
     public ScreenActive(){}
+
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        this.activity= activity;
+
+        try {
+            FabClickListener = (onFabClickListener) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(activity.toString() + " must implement onSomeEventListener");
+        }
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -41,32 +58,55 @@ public class ScreenActive extends Fragment {
                 }
             }
         });
-      //  recyclerView.setOnTouchListener( new ShowHideOnScroll(mFab, R.anim.show,R.anim.hide));
+      //  recyclerView.setOnTouchListener( new ShowHideOnScroll(mFab, R.anim.show_up,R.anim.hide_down));
 
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recyclerView.setHasFixedSize(false);
-        RecyclerAdapter recyclerAdapter = new RecyclerAdapter(createItemList());
-        recyclerView.setAdapter(recyclerAdapter);
+        NotificationRecyclerAdapter notificationRecyclerAdapter = new NotificationRecyclerAdapter(createItemList());
+        recyclerView.setAdapter(notificationRecyclerAdapter);
 
         mFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(v.getContext(), "YES!", Toast.LENGTH_SHORT).show();
+                FabClickListener.onAddNotification("active");
             }
         });
         return view;
     }
-    private ArrayList<CardViewItem> createItemList() {
-        ArrayList<CardViewItem> cardViewItemArrayList = new ArrayList<CardViewItem>();
-        int num = 100;
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        getView().setFocusableInTouchMode(true);
+        getView().requestFocus();
+        getView().setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+
+                if (event.getAction() == KeyEvent.ACTION_UP && keyCode == KeyEvent.KEYCODE_BACK){
+                    getFragmentManager().beginTransaction().replace(R.id.content_frame, new ScreenMap()).addToBackStack("").commit();
+                    return true;
+                }
+                return false;
+            }
+        });
+    }
+
+    private ArrayList<NotificationItem> createItemList() {
+        ArrayList<NotificationItem> recyclerViewItemArrayList = new ArrayList<NotificationItem>();
+        int num = 50;
         for (int i = 1; i <= num; i++) {
-            CardViewItem cardViewItem = new CardViewItem();
-            cardViewItem.setItemIcon(R.drawable.ic_map_marker);
-            cardViewItem.setItemText("Active"+ " "+ i);
-            cardViewItem.setItemSubText("subActive"+ " "+ i);
-            cardViewItemArrayList.add(cardViewItem);
+            NotificationItem notificationItem = new NotificationItem();
+            //  cardViewItem.setItemIcon(R.drawable.ic_map_circle);
+            notificationItem.setItemTitle("Active"+ " "+ i);
+            notificationItem.setItemReminder(1);
+            notificationItem.setItemLocation("");
+            notificationItem.setItemNote("");
+            notificationItem.setItemCategory("");
+            recyclerViewItemArrayList.add(notificationItem);
         }
-        return cardViewItemArrayList;
+        return recyclerViewItemArrayList;
     }
 }
