@@ -1,45 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@android:color/white">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:layout_marginLeft="16dp"
-        android:layout_marginBottom="16dp"
-        android:textColor="@color/ColorPrimary"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:textStyle="bold"
-        android:text="General" />
+    <include layout="@layout/padding" ></include>
     <LinearLayout
+        android:id="@+id/llGeneral"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-
-        android:orientation="vertical"
-        android:id="@+id/llGeneral">
+        android:orientation="vertical">
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:layout_marginLeft="16dp"
+        android:textColor="@color/ColorPrimary"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:textStyle="bold"
+        android:text="General"
+        android:gravity="center_vertical" />
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/llReminder"
         android:layout_width="match_parent" android:layout_height="wrap_content"
         android:layout_gravity="center" android:orientation="horizontal"  >
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="16dp"
-            android:layout_marginStart="50dp"
-            android:src="@drawable/ic_bell_grey600_36dp"/>
+
         <TextView
             android:id="@+id/tvDisable"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:layout_height="48dp"
+            android:textAppearance="?android:attr/textAppearanceMedium"
             android:text="@string/checkbox_disable"
-            android:layout_marginStart="34dp"
+            android:textColor="@color/primary_text"
+            android:layout_marginStart="16dp"
             android:layout_weight="1"
-            />
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp" />
         <CheckBox
             android:id="@+id/chbDisable"
             android:checked="false"
@@ -48,5 +44,35 @@
             android:layout_marginRight="16dp"
             android:layout_marginLeft="16dp"/>
     </LinearLayout>
+        <View
+            android:layout_width="fill_parent"
+            android:layout_height="1dp"
+            android:background="@color/hint_text"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp" />
  </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/llData"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginLeft="16dp"
+            android:textColor="@color/ColorPrimary"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textStyle="bold"
+            android:text="Reminders"
+            android:gravity="center_vertical" />
+    </LinearLayout>
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/rvRemindersSetting"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:clickable="true"
+        android:focusable="true"/>
+
 </LinearLayout>

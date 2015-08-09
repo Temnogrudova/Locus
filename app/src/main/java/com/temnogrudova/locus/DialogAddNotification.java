@@ -1,12 +1,17 @@
 package com.temnogrudova.locus;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
-import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
@@ -19,6 +24,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.animation.TranslateAnimation;
@@ -37,19 +43,16 @@ import android.widget.Toast;
 import com.andexert.library.RippleView;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.places.Place;
-import com.google.android.gms.location.places.PlaceBuffer;
 import com.google.android.gms.location.places.Places;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.temnogrudova.locus.Utils.KeyboardUtil;
 import com.temnogrudova.locus.common.logger.Log;
 import com.temnogrudova.locus.common.activities.SampleActivityBase;
+import com.temnogrudova.locus.database.dbManager;
 
 
 import java.io.IOException;
@@ -61,7 +64,7 @@ import java.util.Locale;
 /**
  * Created by 123 on 12.05.2015.
  */
-public class DialogAddNotification extends Fragment implements GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener {
+public class DialogAddNotification extends Fragment implements GoogleApiClient.OnConnectionFailedListener{
     public static final String NOTIFICATION_TITLE = "NOTIFICATION_TITLE";
     public static final String IS_ENABLE_SWITCH_REMINDER = "POSITION SWITCH REMINDER";
     public static final String IS_ENABLE_SWITCH_CURRENT_POSITION = "POSITION SWITCH CURRENT POSITION";
@@ -69,17 +72,6 @@ public class DialogAddNotification extends Fragment implements GoogleApiClient.O
     public static final String CATEGORY = "CATEGORY";
     public static final String NOTE = "NOTE";
 
-    @Override
-    public void onConnected(Bundle bundle) {
-       if (isLocationService) {
-           LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
-       }
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-
-    }
 
     /**
      * Called when the Activity could not connect to Google Play services and the auto manager
@@ -100,59 +92,19 @@ public class DialogAddNotification extends Fragment implements GoogleApiClient.O
                 Toast.LENGTH_SHORT).show();
     }
 
-    @Override
-    public void onLocationChanged(Location location) {
-        //it happens
-        if (location == null) {
-            return;
-        }
-
-        Geocoder geocoder = new Geocoder(activity, Locale.getDefault());
-        List<Address> addresses = null;
-        String errorMessage = "";
-        try {
-            addresses = geocoder.getFromLocation(
-                    location.getLatitude(),
-                    location.getLongitude(),
-                    // In this sample, get just a single address.
-                    1);
-        } catch (IOException ioException) {
-            // Catch network or other I/O problems.
-            errorMessage = "servicenot avaliable";
-
-        } catch (IllegalArgumentException illegalArgumentException) {
-            // Catch invalid latitude or longitude values.
-            errorMessage = "invalid lang long used";
-        }
-        String s = "";
-        if (addresses!=null) {
-            Address address = addresses.get(0);
-            // Fetch the address lines using getAddressLine,
-            // join them, and send them to the thread.
-            for(int i = 0; i < address.getMaxAddressLineIndex(); i++) {
-                s = s + address.getAddressLine(i) + ", ";
-            }
-            s = s + address.getCountryName();
-
-        }
-        currentLocation = s;
-
-        LocationServices.FusedLocationApi.removeLocationUpdates(
-                mGoogleApiClient, this);
-
-    }
-
     public interface onNotificationItemClickListener {
-        public void onDoneAddNotificationItem(NotificationItem notificationItem, String parent);
+        public void onDoneAddNotificationItem(NotificationItem notificationItem, String parent, String sub);
     }
     onNotificationItemClickListener notificationItemClickListener;
 
     private Activity activity;
+    dbManager dbM;
     private String title = null;
 
-    private String parent = null;
     View rootView;
     EditText etNotificationTitle;
+    View line;
+    TextView tvError;
     SwitchCompat switchReminder;
     SwitchCompat switchCurrentGPS;
     private AutoCompleteTextView mAutocompleteView;
@@ -189,11 +141,15 @@ public class DialogAddNotification extends Fragment implements GoogleApiClient.O
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        activity.findViewById(R.id.shadow).setVisibility(View.INVISIBLE);
         rootView = inflater.inflate(R.layout.dialog_add_notification, container, false);
+        dbM = new dbManager(getActivity());
         bundle = this.getArguments();
         setToolbarTitle();
         isLocationService = false;
         etNotificationTitle = (EditText) rootView.findViewById(R.id.etNotificationTitle);
+        line = rootView.findViewById(R.id.line);
+        tvError= (TextView)rootView.findViewById(R.id.tvError);
         switchReminder = (SwitchCompat) rootView.findViewById(R.id.switchReminder);
         switchCurrentGPS = (SwitchCompat) rootView.findViewById(R.id.switchCurrentGPS);
         mAutocompleteView = (AutoCompleteTextView) rootView.findViewById(R.id.etReminderAddress);
@@ -222,7 +178,7 @@ public class DialogAddNotification extends Fragment implements GoogleApiClient.O
             mAutocompleteView.setText(bundle.getString("location"));
 
             ArrayList<CategoryItem> categoryItems = new ArrayList<CategoryItem>();
-            categoryItems = MainActivity.dbM.getCategoryItems();
+            categoryItems = dbM.getCategoryItems();
             ArrayList<String> categoryTitles = new ArrayList<String>();
             for(CategoryItem categoryItem:categoryItems){
                 categoryTitles.add(categoryItem.getItemTitle());
@@ -255,13 +211,6 @@ public class DialogAddNotification extends Fragment implements GoogleApiClient.O
     public void setTitle(String title) {
         this.title = title;
     }
-    public String getParent() {
-        return parent;
-    }
-
-    public void setParent(String parent) {
-        this.parent = parent;
-    }
     private void setToolbarTitle() {
         View l = rootView.findViewById(R.id.dialog_toolbar);
         ((TextView)l.findViewById(R.id.dialog_toolbar_title)).setText(getTitle());
@@ -269,14 +218,16 @@ public class DialogAddNotification extends Fragment implements GoogleApiClient.O
 
 
     private void addItemsOnAutoCompleteTextView() {
-        createGoogleAPiConnection();
-        // Register a listener that receives callbacks when a suggestion has been selected
-        mAutocompleteView.setOnItemClickListener(mAutocompleteClickListener);
-        // Set up the adapter that will retrieve suggestions from the Places Geo Data API that cover
-        // the entire world.
-        mAdapter = new PlaceAutocompleteAdapter(getActivity(), android.R.layout.simple_list_item_1,
-                mGoogleApiClient, BOUNDS_GREATER_SYDNEY, null);
-        mAutocompleteView.setAdapter(mAdapter);
+        if (isNetworkAvailable()) {
+            createGoogleAPiConnection();
+            // Register a listener that receives callbacks when a suggestion has been selected
+            mAutocompleteView.setOnItemClickListener(mAutocompleteClickListener);
+            // Set up the adapter that will retrieve suggestions from the Places Geo Data API that cover
+            // the entire world.
+            mAdapter = new PlaceAutocompleteAdapter(getActivity(), android.R.layout.simple_list_item_1,
+                    mGoogleApiClient, BOUNDS_GREATER_SYDNEY, null);
+            mAutocompleteView.setAdapter(mAdapter);
+        }
     }
 
     private void createGoogleAPiConnection() {
@@ -398,46 +349,89 @@ public class DialogAddNotification extends Fragment implements GoogleApiClient.O
         rvDone.setOnRippleCompleteListener(new RippleView.OnRippleCompleteListener() {
             @Override
             public void onComplete(RippleView rippleView) {
-                NotificationItem notificationItem = new NotificationItem();
-                int reminder = 0;
-                if (switchReminder.isChecked()){
-                    reminder = 1;
+                if (etNotificationTitle.getText().toString().equals("")) {
+                    line.setVisibility(View.VISIBLE);
+                    tvError.setVisibility(View.VISIBLE);
+                    new AsyncTask<Void, Void, Void>()
+                    {
+
+                        protected Void doInBackground(Void... params)
+                        {
+                            try {
+                                Thread.sleep(3000);                   // sleep 5 seconds
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            return null;
+                        }
+
+                        protected void onPostExecute (Void result)
+                        {
+                            // fade out view nicely
+                            AlphaAnimation alphaAnim = new AlphaAnimation(1.0f,0.0f);
+                            alphaAnim.setDuration(400);
+                            alphaAnim.setAnimationListener(new Animation.AnimationListener()
+                            {
+                                @Override
+                                public void onAnimationStart(Animation animation) {
+
+                                }
+
+                                public void onAnimationEnd(Animation animation)
+                                {
+                                    // make invisible when animation completes, you could also remove the view from the layout
+                                    line.setVisibility(View.INVISIBLE);
+                                    tvError.setVisibility(View.INVISIBLE);
+                                }
+
+                                @Override
+                                public void onAnimationRepeat(Animation animation) {
+
+                                }
+                            });
+                            line.startAnimation(alphaAnim);
+                            tvError.startAnimation(alphaAnim);
+                        }
+                    }.execute();
                 }
                 else {
+                NotificationItem notificationItem = new NotificationItem();
+                int reminder = 0;
+                if (switchReminder.isChecked()) {
+                    reminder = 1;
+                } else {
                     reminder = 0;
                 }
 
                 boolean b = switchCurrentGPS.isChecked();
-                if (b){
+                if (b) {
                     notificationItem.setItemLocation(currentLocation);
-                }
-                else {
+                } else {
                     notificationItem.setItemLocation(mAutocompleteView.getText().toString());
                 }
                 notificationItem.setItemTitle(etNotificationTitle.getText().toString());
                 notificationItem.setItemReminder(reminder);
                 notificationItem.setItemNote(etNote.getText().toString());
+                notificationItem.setItemActive(0);
 
                 String categoryTitle = null;
-                if(spCategory.getSelectedItemPosition() != 0){
+                if (spCategory.getSelectedItemPosition() != 0) {
                     categoryTitle = spCategory.getSelectedItem().toString();
                 }
                 notificationItem.setItemCategory(categoryTitle);
 
-                if(bundle.getInt("type") ==0) {
-                    MainActivity.dbM.addNotification(notificationItem);
+                if (bundle.getInt("type") == 0) {
+                    dbM.addNotification(notificationItem);
                     getFragmentManager().popBackStack();
-                }
-                else {
+                } else {
                     String oldCategory = bundle.getString("category");
-                    if ( ((notificationItem.getItemCategory()!=null)&&
-                            (oldCategory!=null)&&
+                    if (((notificationItem.getItemCategory() != null) &&
+                            (oldCategory != null) &&
                             (!oldCategory.equals(notificationItem.getItemCategory()))) ||
-                        (((notificationItem.getItemCategory()==null)&&(oldCategory!=null))||
-                                ((notificationItem.getItemCategory()!=null)&&(oldCategory==null))) )
-                    {
+                            (((notificationItem.getItemCategory() == null) && (oldCategory != null)) ||
+                                    ((notificationItem.getItemCategory() != null) && (oldCategory == null)))) {
                         ArrayList<CategoryItem> categoryItems = new ArrayList<CategoryItem>();
-                        categoryItems = MainActivity.dbM.getCategoryItems();
+                        categoryItems = dbM.getCategoryItems();
                         for (CategoryItem categoryItem : categoryItems) {
                             if (categoryItem.getItemTitle().equals(notificationItem.getItemCategory())) {
                                 notificationItem.setItemReminder(categoryItem.getItemReminder());
@@ -445,11 +439,13 @@ public class DialogAddNotification extends Fragment implements GoogleApiClient.O
                         }
                     }
                 }
-                MainActivity.dbM.updSelectedNotification(bundle.getString("title"), notificationItem);
+                dbM.updSelectedNotification(bundle.getString("title"), notificationItem);
                 String parent = bundle.getString("parent");
-                notificationItemClickListener.onDoneAddNotificationItem(notificationItem,parent);
+                String sub = bundle.getString("sub");
+                notificationItemClickListener.onDoneAddNotificationItem(notificationItem, parent, sub);
+            }
 
-                }
+        }
 
         });
 
@@ -459,7 +455,7 @@ public class DialogAddNotification extends Fragment implements GoogleApiClient.O
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 rvDone.animateRipple(event);
-                return true;
+            return true;
             }
         });
     }
@@ -522,8 +518,59 @@ public class DialogAddNotification extends Fragment implements GoogleApiClient.O
     @Override
     public void onResume() {
         super.onResume();
+        br = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                lat = intent.getDoubleExtra("lat", 0);
+                longit = intent.getDoubleExtra("longit", 0);
+                setAddress(lat, longit);
+            }
+        };
+        IntentFilter intFilt = new IntentFilter(Constants.ACTION.SET_CURRENT_LOCATION);
+        // регистрируем (включаем) BroadcastReceiver
+        activity.registerReceiver(br, intFilt);
         ((AppCompatActivity) getActivity()).getSupportActionBar().hide();
         getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+    }
+
+    private void setAddress(double lat, double longit) {
+        Geocoder geocoder = new Geocoder(activity, Locale.getDefault());
+        List<Address> addresses = null;
+        String errorMessage = "";
+        try {
+            addresses = geocoder.getFromLocation(
+                    lat,
+                    longit,
+                    // In this sample, get just a single address.
+                    1);
+            while (addresses.size()==0) {
+                addresses = geocoder.getFromLocation(
+                        lat,
+                        longit,
+                        // In this sample, get just a single address.
+                        1);
+            }
+        }
+        catch (IOException ioException) {
+            // Catch network or other I/O problems.
+            errorMessage = "service not avaliable";
+
+        } catch (IllegalArgumentException illegalArgumentException) {
+            // Catch invalid latitude or longitude values.
+            errorMessage = "invalid lang long used";
+        }
+        String s = "";
+        if (addresses!=null) {
+            Address address = addresses.get(0);
+            // Fetch the address lines using getAddressLine,
+            // join them, and send them to the thread.
+            for(int i = 0; i < address.getMaxAddressLineIndex(); i++) {
+                s = s + address.getAddressLine(i) + ", ";
+            }
+            s = s + address.getCountryName();
+
+        }
+        currentLocation = s;
     }
 
 
@@ -531,6 +578,7 @@ public class DialogAddNotification extends Fragment implements GoogleApiClient.O
     public void onPause() {
         super.onPause();
         ((AppCompatActivity) getActivity()).getSupportActionBar().show();
+        activity.findViewById(R.id.shadow).setVisibility(View.VISIBLE);
         isBack = true;
         keyboardUtil = null;
         getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
@@ -540,7 +588,7 @@ public class DialogAddNotification extends Fragment implements GoogleApiClient.O
 
 
     public void addItemsOnSpinner() {
-        ArrayList<CategoryItem> CategoryItems = MainActivity.dbM.getCategoryItems();
+        ArrayList<CategoryItem> CategoryItems = dbM.getCategoryItems();
         List<String> list = new ArrayList<String>();
         list.add("No category");
         for(CategoryItem categoryItem:CategoryItems){
@@ -647,19 +695,14 @@ public class DialogAddNotification extends Fragment implements GoogleApiClient.O
     }
 */
 
+    BroadcastReceiver br;
+    double lat= 0;
+    double longit = 0;
 
     private void setCurrentLocation() {
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(0);
-        mLocationRequest.setFastestInterval(0);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        isLocationService = true;
-        mGoogleApiClient = new GoogleApiClient.Builder(activity)
-                .addApi(LocationServices.API)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .build();
-        mGoogleApiClient.connect();
+        Intent serviceLauncher = new Intent(activity, GpsTrackerService.class);
+        serviceLauncher.setAction(Constants.ACTION.GET_CURRENT_LOCATION);
+        activity.startService(serviceLauncher);
     }
 
     @Override
@@ -686,6 +729,22 @@ public class DialogAddNotification extends Fragment implements GoogleApiClient.O
     }
 
 
-
-
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) activity.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        activity.unregisterReceiver(br);
+    }
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (dbM!=null) {
+            dbM.close();
+        }
+    }
 }

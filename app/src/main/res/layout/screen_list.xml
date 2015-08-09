@@ -46,6 +46,7 @@ because with padding, EdgeEffect of ViewPager become strange.
         android:id="@+id/sliding_tabs"
         android:layout_width="match_parent"
         android:layout_height="@dimen/tab_height"
+        android:elevation="@dimen/tool_bar_elevation"
         android:background="@color/ColorPrimary" />
     </com.temnogrudova.locus.scrollingslidingtabtoolbar.observablescrollview.TouchInterceptionFrameLayout>
 

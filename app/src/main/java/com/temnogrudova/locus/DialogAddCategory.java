@@ -2,6 +2,7 @@ package com.temnogrudova.locus;
 
 import android.app.Activity;
 import android.content.DialogInterface;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
@@ -14,6 +15,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.inputmethod.InputMethodManager;
@@ -23,6 +25,7 @@ import android.widget.TextView;
 
 import com.andexert.library.RippleView;
 import com.temnogrudova.locus.Utils.KeyboardUtil;
+import com.temnogrudova.locus.database.dbManager;
 
 import java.util.ArrayList;
 
@@ -41,11 +44,13 @@ public class DialogAddCategory extends Fragment {
     onCategoryItemClickListener categoryItemClickListener;
 
 
+    dbManager dbM;
     private String title = null;
-
     private Activity activity;
     View rootView;
     EditText etCategoryTitle;
+    View line;
+    TextView tvError;
     SwitchCompat switchReminder;
     SwitchCompat switchShowOnMap;
     boolean isBack = false;
@@ -69,11 +74,15 @@ public class DialogAddCategory extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        activity.findViewById(R.id.shadow).setVisibility(View.INVISIBLE);
         rootView = inflater.inflate(R.layout.dialog_add_category, container, false);
+        dbM = new dbManager(getActivity());
         bundle = this.getArguments();
         setToolbarTitle();
 
         etCategoryTitle = (EditText) rootView.findViewById(R.id.etCategoryTitle);
+        line = rootView.findViewById(R.id.line);
+        tvError= (TextView)rootView.findViewById(R.id.tvError);
         switchReminder = (SwitchCompat) rootView.findViewById(R.id.switchReminder);
         switchShowOnMap = (SwitchCompat) rootView.findViewById(R.id.switchShowOnMap);
 
@@ -163,53 +172,99 @@ public class DialogAddCategory extends Fragment {
         rvDone.setOnRippleCompleteListener(new RippleView.OnRippleCompleteListener() {
             @Override
             public void onComplete(RippleView rippleView) {
-                int reminder = 0;
-                if (switchReminder.isChecked()){
-                    reminder = 1;
-                }
-                else {
-                    reminder = 0;
-                }
-                int showOnMap = 0;
-                if (switchShowOnMap.isChecked()){
-                    showOnMap = 1;
-                }
-                else {
-                    showOnMap = 0;
-                }
-                CategoryItem categoryItem = new CategoryItem();
-                categoryItem.setItemTitle(etCategoryTitle.getText().toString());
-                categoryItem.setItemReminder(reminder);
-                categoryItem.setItemShowOnMap(showOnMap);
+                if (etCategoryTitle.getText().toString().equals("")) {
+                    line.setVisibility(View.VISIBLE);
+                    tvError.setVisibility(View.VISIBLE);
+                    new AsyncTask<Void, Void, Void>()
+                    {
 
-                if(bundle.getInt("type") ==0) {
-                    MainActivity.dbM.addCategory(categoryItem);
-                    //clearAllFields();
-                    getFragmentManager().popBackStack();
+                        protected Void doInBackground(Void... params)
+                        {
+                            try {
+                                Thread.sleep(3000);                   // sleep 5 seconds
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            return null;
+                        }
+
+                        protected void onPostExecute (Void result)
+                        {
+                            // fade out view nicely
+                            AlphaAnimation alphaAnim = new AlphaAnimation(1.0f,0.0f);
+                            alphaAnim.setDuration(400);
+                            alphaAnim.setAnimationListener(new Animation.AnimationListener()
+                            {
+                                @Override
+                                public void onAnimationStart(Animation animation) {
+
+                                }
+
+                                public void onAnimationEnd(Animation animation)
+                                {
+                                    // make invisible when animation completes, you could also remove the view from the layout
+                                    line.setVisibility(View.INVISIBLE);
+                                    tvError.setVisibility(View.INVISIBLE);
+                                }
+
+                                @Override
+                                public void onAnimationRepeat(Animation animation) {
+
+                                }
+                            });
+                            line.startAnimation(alphaAnim);
+                            tvError.startAnimation(alphaAnim);
+                        }
+                    }.execute();
                 }
-                else{
-                        MainActivity.dbM.updSelectedCategory(bundle.getString("title"), categoryItem );
+                else
+                {
+                    int reminder = 0;
+                    if (switchReminder.isChecked()) {
+                        reminder = 1;
+                    } else {
+                        reminder = 0;
+                    }
+                    int showOnMap = 0;
+                    if (switchShowOnMap.isChecked()) {
+                        showOnMap = 1;
+                    } else {
+                        showOnMap = 0;
+                    }
+                    CategoryItem categoryItem = new CategoryItem();
+                    categoryItem.setItemTitle(etCategoryTitle.getText().toString());
+                    categoryItem.setItemReminder(reminder);
+                    categoryItem.setItemShowOnMap(showOnMap);
+
+                    if (bundle.getInt("type") == 0) {
+                        dbM.addCategory(categoryItem);
+                        //clearAllFields();
+                        getFragmentManager().popBackStack();
+                    } else {
+                        dbM.updSelectedCategory(bundle.getString("title"), categoryItem);
 
                         ArrayList<NotificationItem> oldCategoryNotificationsDataArrayList = new ArrayList<NotificationItem>();
                         ArrayList<NotificationItem> categoryNotificationsDataArrayList = new ArrayList<NotificationItem>();
-                        oldCategoryNotificationsDataArrayList = MainActivity.dbM.getCategoryNotificationsItems(categoryItem.getItemTitle());
+                        oldCategoryNotificationsDataArrayList = dbM.getCategoryNotificationsItems(categoryItem.getItemTitle());
 
-                       categoryNotificationsDataArrayList = oldCategoryNotificationsDataArrayList;
+                        categoryNotificationsDataArrayList = oldCategoryNotificationsDataArrayList;
                         for (int i = 0; i < categoryNotificationsDataArrayList.size(); i++) {
                             categoryNotificationsDataArrayList.get(i).setItemReminder(categoryItem.getItemReminder());
                             categoryNotificationsDataArrayList.get(i).setItemCategory(categoryItem.getItemTitle());
                         }
                         for (int i = 0; i < oldCategoryNotificationsDataArrayList.size(); i++) {
-                            MainActivity.dbM.updSelectedNotification(oldCategoryNotificationsDataArrayList.get(i).getItemTitle(),categoryNotificationsDataArrayList.get(i) );
+                            dbM.updSelectedNotification(bundle.getString("title"), categoryNotificationsDataArrayList.get(i));
+                            //  MainActivity.dbM.updSelectedNotification(oldCategoryNotificationsDataArrayList.get(i).getItemTitle(),categoryNotificationsDataArrayList.get(i) );
                         }
 
 
-                    //clearAllFields();
-                    getFragmentManager().popBackStack();
-                    getFragmentManager().popBackStack();
-                    categoryItemClickListener.onViewCategoryItem(categoryItem);
-                }
+                        //clearAllFields();
+                        getFragmentManager().popBackStack();
+                        getFragmentManager().popBackStack();
+                        categoryItemClickListener.onViewCategoryItem(categoryItem);
+                    }
 
+                }
             }
         });
         TextView textView = (TextView) rootView.findViewById(R.id.tvDone);
@@ -282,6 +337,7 @@ public class DialogAddCategory extends Fragment {
     public void onPause() {
         super.onPause();
         ((AppCompatActivity) getActivity()).getSupportActionBar().show();
+        activity.findViewById(R.id.shadow).setVisibility(View.VISIBLE);
         isBack = true;
         keyboardUtil = null;
         getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
@@ -301,6 +357,13 @@ public class DialogAddCategory extends Fragment {
         if (switchShowOnMap!=null) {
             outState.putBoolean(IS_ENABLE_SWITCH_SHOW_ON_MAP, switchShowOnMap.isChecked());
         }
+    }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (dbM!=null) {
+            dbM.close();
+        }
     }
 }

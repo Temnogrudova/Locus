@@ -4,6 +4,7 @@
     <string name="app_name">Locus</string>
     <string name="hello_world">Hello world!</string>
     <string name="new_done">done</string>
+    <string name="facebook_app_id">440057989507126</string>
 
     <string name="drawer_item_map">Map</string>
     <string name="drawer_item_active">Active</string>
@@ -22,7 +23,13 @@
     <string name="switch_address_current_gps">Current position</string>
     <string name="switch_is_show_notifications">Show notifications on map</string>
     <string name="checkbox_disable">Disable Locus</string>
-
-
+    <string name="enable_location">Enable location services?</string>
+    <string name="open_location_settings">Enable</string>
+    <string name="enable_location_message">To use Locus, you should enable location services.\nPlease, enable both GPS and network location</string>
+    <string name="clear_reminders">Clear</string>
+    <string name="clear_reminders_prompt">Clear all reminders</string>
+    <string name="sound_reminders">Sound</string>
+    <string name="delete">Delete</string>
+    <string name="sound_reminders_prompt">Choose notification sound</string>
 
 </resources>

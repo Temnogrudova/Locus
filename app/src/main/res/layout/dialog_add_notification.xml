@@ -43,6 +43,24 @@
             android:hint="Notification title">
             <requestFocus />
         </EditText>
+        <View
+            android:id="@+id/line"
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:layout_marginTop="-8dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:layout_below="@+id/etNotificationTitle"
+            android:background="@color/ColorFab"
+            android:visibility="invisible" />
+        <TextView
+            android:layout_marginLeft="30dp"
+            android:id="@+id/tvError"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/ColorFab"
+            android:text="Notification title is required"
+            android:visibility="invisible" />
     </LinearLayout>
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/llReminder"

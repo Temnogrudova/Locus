@@ -42,7 +42,7 @@ public class dbManager {
             int id = db.convertCursorToInt(cursor);
             cursor = db.getNotificationData(id);
             s = db.convertMassiveCursorToNotificationItems(cursor, DB.NOTIFICATION_COLUMN_TITLE, DB.NOTIFICATION_COLUMN_REMINDER,
-                    DB.NOTIFICATION_COLUMN_LOCATION, DB.NOTIFICATION_COLUMN_NOTE,DB.NOTIFICATION_COLUMN_CATEGORY );
+                    DB.NOTIFICATION_COLUMN_LOCATION, DB.NOTIFICATION_COLUMN_NOTE,DB.NOTIFICATION_COLUMN_ACTIVE,DB.NOTIFICATION_COLUMN_CATEGORY );
         }
         catch (Exception e){
             s = null;
@@ -74,6 +74,7 @@ public void addCategory(CategoryItem categoryItem){
                 notificationItem.getItemReminder(),
                 notificationItem.getItemLocation(),
                 notificationItem.getItemNote(),
+                notificationItem.getItemActive(),
                 notificationItem.getItemCategory());
 
     }
@@ -83,7 +84,7 @@ public void addCategory(CategoryItem categoryItem){
         try {
             cursor = db.getNotificationData();
             notifications = db.convertMassiveCursorToNotificationItems(cursor, DB.NOTIFICATION_COLUMN_TITLE, DB.NOTIFICATION_COLUMN_REMINDER,
-                    DB.NOTIFICATION_COLUMN_LOCATION, DB.NOTIFICATION_COLUMN_NOTE, DB.NOTIFICATION_COLUMN_CATEGORY);
+                    DB.NOTIFICATION_COLUMN_LOCATION, DB.NOTIFICATION_COLUMN_NOTE, DB.NOTIFICATION_COLUMN_ACTIVE, DB.NOTIFICATION_COLUMN_CATEGORY);
         }
         catch (Exception e){
             notifications = null;
@@ -93,8 +94,13 @@ public void addCategory(CategoryItem categoryItem){
     }
 
    public void updSelectedNotification( String selNotification, NotificationItem notificationItem){
-      db.updNotification(selNotification, notificationItem.getItemTitle(), notificationItem.getItemReminder(),
-              notificationItem.getItemLocation(), notificationItem.getItemNote(), notificationItem.getItemCategory());
+      db.updNotification(selNotification,
+              notificationItem.getItemTitle(),
+              notificationItem.getItemReminder(),
+              notificationItem.getItemLocation(),
+              notificationItem.getItemNote(),
+              notificationItem.getItemActive(),
+              notificationItem.getItemCategory());
     }
 
 

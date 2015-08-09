@@ -26,6 +26,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.github.clans.fab.FloatingActionButton;
+import com.temnogrudova.locus.database.dbManager;
 import com.temnogrudova.locus.scrollingslidingtabtoolbar.observablescrollview.ObservableRecyclerView;
 
 import java.util.ArrayList;
@@ -34,11 +35,12 @@ import java.util.List;
 public class TabNotifications extends Fragment {
     private int mScrollOffset = 4;
     private FloatingActionButton mFab;
+    dbManager dbM;
     ObservableRecyclerView recyclerView;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_recyclerview, container, false);
-
+        dbM = new dbManager(getActivity());
         recyclerView = (ObservableRecyclerView) view.findViewById(R.id.scroll);
         Fragment parentFragment = getParentFragment();
         mFab =(FloatingActionButton) parentFragment.getView().findViewById(R.id.fab);
@@ -67,27 +69,46 @@ public class TabNotifications extends Fragment {
 
     public void updateNotificationRecyclerView() {
         ArrayList<NotificationItem> notificationDataArrayList = new ArrayList<NotificationItem>();
-        notificationDataArrayList = MainActivity.dbM.getNotificationItems();
+        notificationDataArrayList = dbM.getNotificationItems();
 
+        ArrayList<NotificationItem> notActiveNotificationDataArrayList = new ArrayList<NotificationItem>();
         List<Integer> list = new ArrayList<Integer>();
-        ArrayList<CategoryItem> categoryItems = MainActivity.dbM.getCategoryItems();
+        ArrayList<CategoryItem> categoryItems = dbM.getCategoryItems();
         for (CategoryItem categoryItem:categoryItems){
-            int i =MainActivity.dbM.getCategoryId(categoryItem.getItemTitle());
+            int i = dbM.getCategoryId(categoryItem.getItemTitle());
             list.add(i);
         }
         for(int i = 0; i<notificationDataArrayList.size();i++){
-            if(notificationDataArrayList.get(i).getItemCategory()!=null) {
-                int id = Integer.parseInt(notificationDataArrayList.get(i).getItemCategory());
-                for(int y = 0; y<list.size();y++){
-                    if (list.get(y) == id){
-                        notificationDataArrayList.get(i).setItemCategory(categoryItems.get(y).getItemTitle());
+            if(notificationDataArrayList.get(i).getItemActive() == 0) {
+                if (notificationDataArrayList.get(i).getItemCategory() != null) {
+                    int id = Integer.parseInt(notificationDataArrayList.get(i).getItemCategory());
+                    for (int y = 0; y < list.size(); y++) {
+                        if (list.get(y) == id) {
+                            notificationDataArrayList.get(i).setItemCategory(categoryItems.get(y).getItemTitle());
+                            notActiveNotificationDataArrayList.add(notificationDataArrayList.get(i));
+                        }
                     }
                 }
+                else{
+                    notActiveNotificationDataArrayList.add(notificationDataArrayList.get(i));
+                }
             }
+           /* else{
+                notificationDataArrayList.remove(i);
+            }
+            */
         }
         if (!(notificationDataArrayList==null)) {
-            NotificationRecyclerAdapter notificationRecyclerAdapter = new NotificationRecyclerAdapter(notificationDataArrayList);
+            NotificationRecyclerAdapter notificationRecyclerAdapter = new NotificationRecyclerAdapter(notActiveNotificationDataArrayList, "list");
             recyclerView.setAdapter(notificationRecyclerAdapter);
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (dbM!=null) {
+            dbM.close();
         }
     }
 }

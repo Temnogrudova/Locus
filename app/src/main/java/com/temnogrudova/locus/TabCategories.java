@@ -112,6 +112,8 @@ public class TabCategories extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        dbM.close();
+        if (dbM!=null) {
+            dbM.close();
+        }
     }
 }

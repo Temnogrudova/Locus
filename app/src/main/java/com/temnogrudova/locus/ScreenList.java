@@ -17,7 +17,9 @@
 package com.temnogrudova.locus;
 
 import android.animation.ValueAnimator;
+import android.annotation.TargetApi;
 import android.app.Activity;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -49,7 +51,7 @@ public class ScreenList extends Fragment implements ObservableScrollViewCallback
 
     public interface onFabClickListener {
         public void onAddCategory();
-        public void onAddNotification(String parent);
+        public void onAddNotification(String parent, String sub);
     }
 
     onFabClickListener FabClickListener;
@@ -71,6 +73,7 @@ public class ScreenList extends Fragment implements ObservableScrollViewCallback
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         this.activity = activity;
+
         try {
             FabClickListener = (onFabClickListener) activity;
         } catch (ClassCastException e) {
@@ -78,11 +81,12 @@ public class ScreenList extends Fragment implements ObservableScrollViewCallback
         }
     }
 
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         ((MainActivity) getActivity()).getSupportActionBar().setTitle("List");
+        activity.findViewById(R.id.shadow).setVisibility(View.INVISIBLE);
         View view = inflater.inflate(R.layout.screen_list, container, false);
-
         mPagerAdapter = new NavigationAdapter(getChildFragmentManager());
         mPager = (ViewPager) view.findViewById(R.id.pager);
         mPager.setAdapter(mPagerAdapter);
@@ -108,7 +112,7 @@ public class ScreenList extends Fragment implements ObservableScrollViewCallback
                         FabClickListener.onAddCategory();
                         break;
                     case 1:
-                        FabClickListener.onAddNotification("list");
+                        FabClickListener.onAddNotification("list", null);
                         break;
                 }
             }
@@ -121,7 +125,6 @@ public class ScreenList extends Fragment implements ObservableScrollViewCallback
     @Override
     public void onResume() {
         super.onResume();
-
         getView().setFocusableInTouchMode(true);
         getView().requestFocus();
         getView().setOnKeyListener(new View.OnKeyListener() {
@@ -342,7 +345,15 @@ public class ScreenList extends Fragment implements ObservableScrollViewCallback
     @Override
     public void onPause() {
         super.onPause();
+
         showToolbar();
     }
 
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        activity.findViewById(R.id.shadow).setVisibility(View.VISIBLE);
+
     }
+}

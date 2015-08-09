@@ -1,15 +1,23 @@
 package com.temnogrudova.locus;
 
-import android.content.BroadcastReceiver;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.media.RingtoneManager;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SwitchCompat;
 import android.support.v7.widget.Toolbar;
+import android.util.Base64;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -19,13 +27,34 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
+import com.facebook.FacebookSdk;
+import com.facebook.GraphRequest;
+import com.facebook.GraphResponse;
+import com.facebook.appevents.AppEventsLogger;
+import com.facebook.login.LoginManager;
+import com.facebook.login.LoginResult;
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.accountswitcher.AccountHeader;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
+import com.nispok.snackbar.Snackbar;
+import com.nispok.snackbar.listeners.ActionClickListener;
 import com.temnogrudova.locus.Utils.DrawerUtil;
-import com.temnogrudova.locus.database.dbManager;
 
-public class MainActivity extends AppCompatActivity implements ScreenMap.onFabClickListener,
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
+
+public class MainActivity extends AppCompatActivity implements
+        ScreenMap.onFabClickListener,
         ScreenList.onFabClickListener,
         ScreenActive.onFabClickListener,
         CategoryRecyclerAdapter.onCategoryItemClickListener,
@@ -34,12 +63,15 @@ public class MainActivity extends AppCompatActivity implements ScreenMap.onFabCl
         DialogViewNotificationItem.onNotificationItemEditClickListener,
         DialogAddCategory.onCategoryItemClickListener,
         DialogAddNotification.onNotificationItemClickListener,
-        ScreenSettings.onDisableCheckedListener
+        ScreenSettings.onDisableCheckedListener,
+        SettingRecyclerAdapter.onSettingItemClickListener,
+        DrawerUtil.onUpadteListener
+
 {
     public static final String ID_FRAGMENT = "ID_FRAGMENT";
     AccountHeader.Result  headerResult;
     Drawer.Result drawerResult;
-
+    Toolbar toolbar;
     ScreenMap screenMap;
     ScreenList screenList;
     ScreenActive screenActive;
@@ -54,17 +86,17 @@ public class MainActivity extends AppCompatActivity implements ScreenMap.onFabCl
     int mCurrentSelectedPosition;
     private boolean mRotated;
     Bundle savedInstanceState = null;
-    static dbManager dbM;
 
     boolean currentlyTracking;
+    CallbackManager callbackManager;
+    String saveThis;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        FacebookSdk.sdkInitialize(getApplicationContext());
         SharedPreferences sharedPreferences = getSharedPreferences(ScreenSettings.PREFS_NAME, Context.MODE_PRIVATE);
         currentlyTracking = sharedPreferences.getBoolean("currentlyTracking", true);
-
 
         this.savedInstanceState = savedInstanceState;
         Boolean nonConfigState =
@@ -79,11 +111,9 @@ public class MainActivity extends AppCompatActivity implements ScreenMap.onFabCl
         }
 
         setContentView(R.layout.main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-        dbM = new dbManager(this);
 
         fragmentManager =  getSupportFragmentManager();
         screenMap = new ScreenMap();
@@ -97,33 +127,109 @@ public class MainActivity extends AppCompatActivity implements ScreenMap.onFabCl
 
         isExistsScreenList = false;
 
-        headerResult = DrawerUtil.getAccountHeader(MainActivity.this, savedInstanceState);
-        drawerResult = DrawerUtil.createCommonDrawer(MainActivity.this, toolbar, headerResult);
+        SharedPreferences settings = getSharedPreferences(ScreenSettings.PREFS_NAME, 0);
+        String userName = settings.getString("user_name", "Guest");
+        String bm = settings.getString("bm", "");
+        Drawable drawable = null;
+        if (bm.equals("")){
+            drawable = getResources().getDrawable(R.drawable.avatar_man);
+        }
+        else{
+            byte[] b = Base64.decode(bm, Base64.DEFAULT);
+            Bitmap icon = BitmapFactory.decodeByteArray(b, 0, b.length);
+
+            drawable = new BitmapDrawable(getResources(), icon);
+        }
+      //  headerResult = DrawerUtil.getAccountHeader(MainActivity.this, savedInstanceState, userName, drawable, toolbar);
+        onNavigatorDrawUpadate(userName, drawable);
+     /*   drawerResult = DrawerUtil.createCommonDrawer(MainActivity.this, toolbar, headerResult);
         drawerResult.setSelectionByIdentifier(mCurrentSelectedPosition);
         drawerResult.setOnDrawerItemClickListener(new Drawer.OnDrawerItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l, IDrawerItem iDrawerItem) {
-                mCurrentSelectedPosition = iDrawerItem.getIdentifier();
-                if (iDrawerItem != null) {
-                    if (isExistsScreenList){
-                        screenList.showToolbar();
-                    }
-                    if (iDrawerItem.getIdentifier() == 0) {
-                        fragmentManager.beginTransaction().replace(R.id.content_frame, screenMap).addToBackStack("").commit();
-                    } else if (iDrawerItem.getIdentifier() == 1) {
-                        if (isExistsScreenList == false){
-                            isExistsScreenList = true;
-                        }
-                        screenList = new ScreenList();
-                        fragmentManager.beginTransaction().replace(R.id.content_frame, screenList).addToBackStack("").commit();
-                    } else if (iDrawerItem.getIdentifier() == 2) {
-                        fragmentManager.beginTransaction().replace(R.id.content_frame, screenActive).addToBackStack("").commit();
-                    } else if (iDrawerItem.getIdentifier() == 3) {
-                        fragmentManager.beginTransaction().replace(R.id.content_frame, screenSettings).addToBackStack("").commit();
-                    }
-                }
+               NavigatorDrawClickItem(iDrawerItem);
             }
         });
+
+*/
+        callbackManager = CallbackManager.Factory.create();
+        LoginManager.getInstance().registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+            @Override
+            public void onSuccess(final LoginResult loginResult) {
+              //  onNavigatorDrawUpadate();
+              //  Toast.makeText(getApplicationContext(), "in LoginResult on success", Toast.LENGTH_LONG).show();
+                final String userId = loginResult.getAccessToken().getUserId();
+
+                AsyncTask<Void, Void, Bitmap> t = new AsyncTask<Void, Void, Bitmap>(){
+                    protected Bitmap doInBackground(Void... p) {
+                        Bitmap bm = null;
+                        try {
+                            URL aURL = new URL("https://graph.facebook.com/"+userId+"/picture?type=large");
+                            URLConnection conn = aURL.openConnection();
+                            conn.setUseCaches(true);
+                            conn.connect();
+                            InputStream is = conn.getInputStream();
+                            BufferedInputStream bis = new BufferedInputStream(is);
+                            bm = BitmapFactory.decodeStream(bis);
+                            bis.close();
+                            is.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        return bm;
+                    }
+
+                    protected void onPostExecute(final Bitmap bm){
+                        GraphRequest request = GraphRequest.newMeRequest(
+                                loginResult.getAccessToken(),
+                                new GraphRequest.GraphJSONObjectCallback() {
+                                    @Override
+                                    public void onCompleted(
+                                            JSONObject object,
+                                            GraphResponse response) {
+                                        // Application code
+                                        try {
+                                            String fName = object.getString("first_name");
+                                            String lName = object.getString("last_name");
+                                            String userName = fName+" "+ lName;
+                                            SharedPreferences settings = getSharedPreferences(ScreenSettings.PREFS_NAME, 0);
+                                            SharedPreferences.Editor editor = settings.edit();
+                                            editor.putString("user_name", userName);
+                                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                            bm.compress(Bitmap.CompressFormat.PNG, 100, baos); //bm is the bitmap object
+                                            byte[] b = baos.toByteArray();
+                                            saveThis = Base64.encodeToString(b, Base64.DEFAULT);
+                                            editor.putString("bm",saveThis );
+                                            // Commit the edits!
+                                            editor.commit();
+                                            final Drawable drawable = new BitmapDrawable(getResources(), bm);
+                                            headerResult = DrawerUtil.getAccountHeader(MainActivity.this, savedInstanceState, userName, drawable, toolbar);
+                                            onNavigatorDrawUpadate(userName, drawable);
+                                         //   drawerResult = DrawerUtil.createCommonDrawer(MainActivity.this, toolbar, headerResult);
+
+                                        } catch (JSONException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                });
+                                request.executeAsync();
+
+                    }
+                };
+                t.execute();
+            }
+
+            @Override
+            public void onCancel() {
+                Toast.makeText(getApplicationContext(), "in LoginResult on cancel", Toast.LENGTH_LONG).show();
+            }
+
+            @Override
+            public void onError(FacebookException exception) {
+                Toast.makeText(getApplicationContext(), "in LoginResult on error", Toast.LENGTH_LONG).show();
+            }
+        });
+
     }
 
     @Override
@@ -157,7 +263,7 @@ public class MainActivity extends AppCompatActivity implements ScreenMap.onFabCl
     }
 
     @Override
-    public void onAddNotification(String parent) {
+    public void onAddNotification(String parent, String sub) {
         Bundle bundle = new Bundle();
         bundle.putInt("type", 0);
         bundle.putString("title", "");
@@ -167,6 +273,7 @@ public class MainActivity extends AppCompatActivity implements ScreenMap.onFabCl
         bundle.putString("category", "No category");
         bundle.putString("note","");
         bundle.putString("parent",parent);
+        bundle.putString("sub", sub);
         dialogAddNotification = new DialogAddNotification();
         dialogAddNotification.setArguments(bundle);
         fragmentManager.beginTransaction().replace(R.id.content_frame, dialogAddNotification).addToBackStack("").commit();
@@ -197,7 +304,7 @@ public class MainActivity extends AppCompatActivity implements ScreenMap.onFabCl
     }
 
 
-    public void onEditNotification(NotificationItem notificationItem, String parent) {
+    public void onEditNotification(NotificationItem notificationItem, String parent, String sub) {
         Bundle bundle = new Bundle();
         bundle.putInt("type", 1);
         bundle.putString("title", notificationItem.getItemTitle());
@@ -207,6 +314,7 @@ public class MainActivity extends AppCompatActivity implements ScreenMap.onFabCl
         bundle.putString("category", notificationItem.getItemCategory());
         bundle.putString("note", notificationItem.getItemNote());
         bundle.putString("parent",parent);
+        bundle.putString("sub", sub);
         dialogAddNotification = new DialogAddNotification();
         dialogAddNotification.setArguments(bundle);
         fragmentManager.beginTransaction().replace(R.id.content_frame, dialogAddNotification).addToBackStack("").commit();
@@ -225,13 +333,14 @@ public class MainActivity extends AppCompatActivity implements ScreenMap.onFabCl
     }
 
     @Override
-    public void onViewNotificationItem(NotificationItem notificationItem) {
+    public void onViewNotificationItem(NotificationItem notificationItem, String parent) {
         Bundle bundle = new Bundle();
         bundle.putString("title", notificationItem.getItemTitle());
         bundle.putInt("reminder", notificationItem.getItemReminder());
         bundle.putString("location", notificationItem.getItemLocation());
         bundle.putString("note", notificationItem.getItemNote());
         bundle.putString("category", notificationItem.getItemCategory());
+        bundle.putString("parent",parent);
         dialogViewNotificationItem = new DialogViewNotificationItem();
         dialogViewNotificationItem.setArguments(bundle);
         fragmentManager.beginTransaction().replace(R.id.content_frame, dialogViewNotificationItem).addToBackStack("").commit();
@@ -239,25 +348,38 @@ public class MainActivity extends AppCompatActivity implements ScreenMap.onFabCl
     }
 
     @Override
-    public void onDoneAddNotificationItem(NotificationItem notificationItem, String parent) {
+    public void onDoneAddNotificationItem(NotificationItem notificationItem, String parent, String sub) {
+       if (sub!=null) {
+           if (sub.equals("view_notification")) {
+               onViewNotificationItem(notificationItem, parent);
+           }
+       }
+        else {
+            if (parent.equals("map")) {
+                fragmentManager.beginTransaction().replace(R.id.content_frame, screenMap).addToBackStack("").commit();
+            } else if (parent.equals("list")) {
+                fragmentManager.beginTransaction().replace(R.id.content_frame, screenList).addToBackStack("").commit();
+            } else if (parent.equals("active")) {
+                fragmentManager.beginTransaction().replace(R.id.content_frame, screenActive).addToBackStack("").commit();
+            }
+        }
+    }
+
+    @Override
+    public void onBackViewNotificationItem(String parent) {
         if (parent.equals("map")){
             fragmentManager.beginTransaction().replace(R.id.content_frame, screenMap).addToBackStack("").commit();
+            drawerResult.setSelection(0);
         }
-        else if (parent.equals("list")){
+        else if (parent.equals("list")) {
             fragmentManager.beginTransaction().replace(R.id.content_frame, screenList).addToBackStack("").commit();
         }
         else if (parent.equals("active")){
             fragmentManager.beginTransaction().replace(R.id.content_frame, screenActive).addToBackStack("").commit();
         }
-        else if (parent.equals("view_notification")){
-            onViewNotificationItem(notificationItem);
-        }
-    }
-
-    @Override
-    public void onBackViewNotificationItem() {
-            fragmentManager.beginTransaction().replace(R.id.content_frame, screenList).addToBackStack("").commit();
      }
+
+
 
     @Override
     public void onStart(){
@@ -270,21 +392,46 @@ public class MainActivity extends AppCompatActivity implements ScreenMap.onFabCl
     @Override
     protected void onResume() {
         super.onResume();
+        // Logs 'install' and 'app activate' App Events.
+
+        AppEventsLogger.activateApp(this);
+
+
         SharedPreferences settings = getSharedPreferences(ScreenSettings.PREFS_NAME, 0);
         final boolean disableMode = settings.getBoolean("disableMode", false);
         onDisableIsChecked(disableMode);
 
-
         final boolean start_from_notification = settings.getBoolean("start_from_notification", false);
-        if (start_from_notification){ Toast.makeText(this,"123456", Toast.LENGTH_SHORT).show();}
+        if (start_from_notification){
 
+            Snackbar snackbar =  Snackbar.with(getApplicationContext());
+            snackbar.text("You have a new place reminder"); // text to display
+            snackbar.duration(5000);
+            snackbar.actionLabel("→");
+            snackbar.actionListener(new ActionClickListener() {
+                @Override
+                public void onActionClicked(Snackbar snackbar) {
+                     drawerResult.setSelection(2);
+                   // fragmentManager.beginTransaction().replace(R.id.content_frame, screenActive).addToBackStack("").commit();
+                }
+            });
+            snackbar.setPadding(8, 0, 0, 0);
+            snackbar.show(this);
+
+            // activity where it is displayed
+            SharedPreferences.Editor editor = settings.edit();
+            editor.putBoolean("start_from_notification", false);
+            // Commit the edits!
+            editor.commit();
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        // Logs 'app deactivate' App Event.
+        AppEventsLogger.deactivateApp(this);
     }
-
 
     @Override
     public void onStop(){
@@ -300,12 +447,6 @@ public class MainActivity extends AppCompatActivity implements ScreenMap.onFabCl
 
     protected void onDestroy() {
         super.onDestroy();
-        dbM.close();
-        SharedPreferences settings = getSharedPreferences(ScreenSettings.PREFS_NAME, 0);
-        SharedPreferences.Editor editor = settings.edit();
-        editor.putBoolean("start_from_notification", false);
-        // Commit the edits!
-        editor.commit();
     }
 
     @Override
@@ -342,13 +483,10 @@ public class MainActivity extends AppCompatActivity implements ScreenMap.onFabCl
             }
                 Intent startLockIntent = new Intent(MainActivity.this, GpsTrackerService.class);
                 startLockIntent.setAction(Constants.ACTION.START_ACTION);
-                startLockIntent.putExtra("not_notify", true);
                 startService(startLockIntent);
                 currentlyTracking = true;
                 editor.putBoolean("currentlyTracking", true);
-
         }
-
     }
 
     public boolean isFirst(){
@@ -362,53 +500,64 @@ public class MainActivity extends AppCompatActivity implements ScreenMap.onFabCl
         return first;
     }
 
+    @Override
+    protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        callbackManager.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == Activity.RESULT_OK) {
+            Uri uri = data.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI);
+            if (uri != null) {
+                String ringTonePath = uri.toString();
+                Intent soundIntent = new Intent(MainActivity.this, GpsTrackerService.class);
+                soundIntent.setAction(Constants.ACTION.SET_NOTOFICATION_SOUND);
+                soundIntent.putExtra("notification_sound",ringTonePath);
+                startService(soundIntent);
+            }
+        }
+    }
 
+    @Override
+    public void onClearRemindersItem() {
+        screenSettings.onClearRemindersItem();
+    }
+
+    @Override
+    public void onSoundReminder(){
+       screenSettings.onSoundRemindersItem();
+    }
+
+    @Override
+    public void onNavigatorDrawUpadate(String userName, Drawable drawable) {
+        headerResult = DrawerUtil.getAccountHeader(MainActivity.this, savedInstanceState, userName, drawable, toolbar);
+        drawerResult = DrawerUtil.createCommonDrawer(MainActivity.this, toolbar, headerResult);
+        drawerResult.setSelectionByIdentifier(mCurrentSelectedPosition);
+        drawerResult.setOnDrawerItemClickListener(new Drawer.OnDrawerItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l, IDrawerItem iDrawerItem) {
+                NavigatorDrawClickItem(iDrawerItem);
+            }
+        });
+    }
+
+    public void NavigatorDrawClickItem(IDrawerItem iDrawerItem){
+        mCurrentSelectedPosition = iDrawerItem.getIdentifier();
+        if (iDrawerItem != null) {
+            if (isExistsScreenList){
+                screenList.showToolbar();
+            }
+            if (iDrawerItem.getIdentifier() == 0) {
+                fragmentManager.beginTransaction().replace(R.id.content_frame, screenMap).addToBackStack("").commit();
+            } else if (iDrawerItem.getIdentifier() == 1) {
+                if (isExistsScreenList == false){
+                    isExistsScreenList = true;
+                }
+                screenList = new ScreenList();
+                fragmentManager.beginTransaction().replace(R.id.content_frame, screenList).addToBackStack("").commit();
+            } else if (iDrawerItem.getIdentifier() == 2) {
+                fragmentManager.beginTransaction().replace(R.id.content_frame, screenActive).addToBackStack("").commit();
+            } else if (iDrawerItem.getIdentifier() == 3) {
+                fragmentManager.beginTransaction().replace(R.id.content_frame, screenSettings).addToBackStack("").commit();
+            }
+        }
+    }
 }
-/*
-                drawerResult.setOnDrawerItemClickListener(new Drawer.OnDrawerItemClickListener() {
-                    @Override
-                    // Обработка клика
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id, IDrawerItem drawerItem) {
-                        if (drawerItem != null) {
-
-                            if (drawerItem.getIdentifier() == 1) {
-                                MainActivity.this.getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, new ScreenOne()).commit();
-                            } else if (drawerItem.getIdentifier() == 2) {
-                                MainActivity.this.getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, new ScreenTwo()).commit();
-                            } else if (drawerItem.getIdentifier() == 3) {
-                                MainActivity.this.getSupportFragmentManager().beginTransaction().replace(R.id.content_frame, new ScreenThree()).commit();
-                            } else if (drawerItem.getIdentifier() == 70) {
-                                // Rate App
-                                try {
-                                    Intent int_rate = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + MainActivity.this.getApplicationContext().getPackageName()));
-                                    int_rate.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    MainActivity.this.getApplicationContext().startActivity(int_rate);
-                                } catch (Exception e) {
-                                    //
-                                }
-                            }
-
-                        }
-                       /*
-                        if (drawerItem instanceof Nameable) {
-                            Toast.makeText(MainActivity.this, MainActivity.this.getString(((Nameable) drawerItem).getNameRes()), Toast.LENGTH_SHORT).show();
-                        }
-
-                        if (drawerItem instanceof Badgeable) {
-                            Badgeable badgeable = (Badgeable) drawerItem;
-                            if (badgeable.getBadge() != null) {
-                                // учтите, не делайте так, если ваш бейдж содержит символ "+"
-                                try {
-                                    int badge = Integer.valueOf(badgeable.getBadge());
-                                    if (badge > 0) {
-                                        drawerResult.updateBadge(String.valueOf(badge - 1), position);
-                                    }
-                                } catch (Exception e) {
-                                    Log.d("test", "Не нажимайте на бейдж, содержащий плюс! :)");
-                                }
-                            }
-                        }
-                    }
-                });
-
-        */

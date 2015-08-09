@@ -9,22 +9,30 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.github.clans.fab.FloatingActionButton;
+import com.temnogrudova.locus.database.dbManager;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by 123 on 12.05.2015.
  */
 public class ScreenActive extends Fragment {
     public interface onFabClickListener {
-        public void onAddNotification(String parent);
+        public void onAddNotification(String parent, String sub);
+        public void onBackViewNotificationItem(String parent);
     }
+
     onFabClickListener FabClickListener;
 
+    RecyclerView recyclerView;
     private int mScrollOffset = 4;
     Activity activity;
+    dbManager dbM;
+
     private FloatingActionButton mFab;
     public ScreenActive(){}
 
@@ -43,7 +51,8 @@ public class ScreenActive extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         ((MainActivity) getActivity()).getSupportActionBar().setTitle("Active");
         View view = inflater.inflate(R.layout.screen_active, container, false);
-        final RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.scroll);
+        dbM = new dbManager(getActivity());
+        recyclerView = (RecyclerView) view.findViewById(R.id.scroll);
         mFab = (FloatingActionButton)view.findViewById(R.id.fab);
         recyclerView.setOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -58,18 +67,44 @@ public class ScreenActive extends Fragment {
                 }
             }
         });
-      //  recyclerView.setOnTouchListener( new ShowHideOnScroll(mFab, R.anim.show_up,R.anim.hide_down));
+
+        ArrayList<NotificationItem> activeNotificationArrayList = new ArrayList<NotificationItem>();
+        ArrayList<NotificationItem> notificationDataArrayList = new ArrayList<NotificationItem>();
+        notificationDataArrayList = dbM.getNotificationItems();
+        for(int i = 0; i<notificationDataArrayList.size();i++){
+            if (notificationDataArrayList.get(i).getItemCategory()!=null){
+                ArrayList<CategoryItem> categoryItemsArrayList = new ArrayList<CategoryItem>();
+                categoryItemsArrayList = dbM.getCategoryItems();
+                for(CategoryItem categoryItem: categoryItemsArrayList){
+                    Integer num = dbM.getCategoryId(categoryItem.getItemTitle());
+                    if (num==Integer.parseInt(notificationDataArrayList.get(i).getItemCategory())){
+                        notificationDataArrayList.get(i).setItemCategory(categoryItem.getItemTitle());
+                    }
+                }
+            }
+
+            if(notificationDataArrayList.get(i).getItemActive() == 1) {
+                activeNotificationArrayList.add(notificationDataArrayList.get(i));
+            }
+        }
 
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recyclerView.setHasFixedSize(false);
-        NotificationRecyclerAdapter notificationRecyclerAdapter = new NotificationRecyclerAdapter(createItemList());
+        NotificationRecyclerAdapter notificationRecyclerAdapter = new NotificationRecyclerAdapter(activeNotificationArrayList, "active");
         recyclerView.setAdapter(notificationRecyclerAdapter);
 
+        /*
+        int size =0;
+        if (activeNotificationArrayList!=null){
+            size = activeNotificationArrayList.size();
+        }
+        FabClickListener.onChangeBadge(size);
+        */
         mFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                FabClickListener.onAddNotification("active");
+                FabClickListener.onAddNotification("active", null);
             }
         });
         return view;
@@ -86,7 +121,8 @@ public class ScreenActive extends Fragment {
             public boolean onKey(View v, int keyCode, KeyEvent event) {
 
                 if (event.getAction() == KeyEvent.ACTION_UP && keyCode == KeyEvent.KEYCODE_BACK){
-                    getFragmentManager().beginTransaction().replace(R.id.content_frame, new ScreenMap()).addToBackStack("").commit();
+                    FabClickListener.onBackViewNotificationItem("map");
+                  // getFragmentManager().beginTransaction().replace(R.id.content_frame, new ScreenMap()).addToBackStack("").commit();
                     return true;
                 }
                 return false;
@@ -94,19 +130,11 @@ public class ScreenActive extends Fragment {
         });
     }
 
-    private ArrayList<NotificationItem> createItemList() {
-        ArrayList<NotificationItem> recyclerViewItemArrayList = new ArrayList<NotificationItem>();
-        int num = 50;
-        for (int i = 1; i <= num; i++) {
-            NotificationItem notificationItem = new NotificationItem();
-            //  cardViewItem.setItemIcon(R.drawable.ic_map_circle);
-            notificationItem.setItemTitle("Active"+ " "+ i);
-            notificationItem.setItemReminder(1);
-            notificationItem.setItemLocation("");
-            notificationItem.setItemNote("");
-            notificationItem.setItemCategory("");
-            recyclerViewItemArrayList.add(notificationItem);
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (dbM!=null) {
+            dbM.close();
         }
-        return recyclerViewItemArrayList;
     }
 }

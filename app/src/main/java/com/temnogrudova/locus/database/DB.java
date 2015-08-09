@@ -42,6 +42,7 @@ public class DB {
     public static final String NOTIFICATION_COLUMN_REMINDER = "reminder";
     public static final String NOTIFICATION_COLUMN_LOCATION = "location";
     public static final String NOTIFICATION_COLUMN_NOTE = "note";
+    public static final String NOTIFICATION_COLUMN_ACTIVE = "active";
     public static final String NOTIFICATION_COLUMN_CATEGORY = "category_id";
     private static final String NOTIFICATION_TABLE_CREATE = "create table "
             + NOTIFICATION_TABLE + "("
@@ -50,6 +51,7 @@ public class DB {
             + NOTIFICATION_COLUMN_REMINDER + " integer, "
             + NOTIFICATION_COLUMN_LOCATION + " text, "
             + NOTIFICATION_COLUMN_NOTE + " text, "
+            + NOTIFICATION_COLUMN_ACTIVE + " integer, "
             + NOTIFICATION_COLUMN_CATEGORY + " integer" + ");";
 
     private final Context mCtx;
@@ -173,7 +175,7 @@ public class DB {
         return mDB.update(CATEGORY_TABLE, cv, CATEGORY_COLUMN_TITLE + " = '" + selectedCategory + "'", null)>0;
     }
 
-    public long addNotification( String title, Integer reminder, String location, String note, String categoryTitle){
+    public long addNotification( String title, Integer reminder, String location, String note,Integer active, String categoryTitle){
         // подготовим данные для вставки в виде пар: наименование столбца - значение
         Integer categoryId = null;
         if (categoryTitle!=null){
@@ -187,6 +189,7 @@ public class DB {
         cv.put("reminder", reminder);
         cv.put("location", location);
         cv.put("note", note);
+        cv.put("active", active);
         cv.put("category_id", categoryId);
         // вставляем запись и получаем ее ID
         long rowID = mDB.insert(NOTIFICATION_TABLE, null, cv);
@@ -199,7 +202,7 @@ public class DB {
 
     public ArrayList<NotificationItem> convertMassiveCursorToNotificationItems(Cursor c, String ColumnName,
                                                                            String ColumnReminder, String ColumnLocation,
-                                                                           String ColumnNote,
+                                                                           String ColumnNote,String ColumnActive,
                                                                            String ColumnCategory){
         ArrayList<NotificationItem> str = new ArrayList<NotificationItem>();
         str.clear();
@@ -224,6 +227,10 @@ public class DB {
                         if (cn.equals(ColumnNote))
                         {
                             notificationItem.setItemNote(c.getString(c.getColumnIndex(cn)));
+                        }
+                        if (cn.equals(ColumnActive))
+                        {
+                            notificationItem.setItemActive(c.getInt(c.getColumnIndex(cn)));
                         }
                         if (cn.equals(ColumnCategory))
                         {
@@ -250,7 +257,7 @@ public class DB {
         return  mDB.delete(NOTIFICATION_TABLE,  NOTIFICATION_COLUMN_TITLE + " = '" + selNotification + "'", null)>0;
     }
 
-    public boolean updNotification(String selNotification,  String title,Integer reminder,String location,String note, String categoryTitle) {
+    public boolean updNotification(String selNotification,  String title,Integer reminder,String location,String note, Integer active, String categoryTitle) {
         // подготовим значения для обновления
         Integer categoryId = null;
         if (categoryTitle!=null){
@@ -263,6 +270,7 @@ public class DB {
         cv.put("reminder", reminder);
         cv.put("location", location);
         cv.put("note", note);
+        cv.put("active", active);
         cv.put("category_id", categoryId);
 
         return mDB.update(NOTIFICATION_TABLE, cv, NOTIFICATION_COLUMN_TITLE + " = '" + selNotification + "'", null)>0;

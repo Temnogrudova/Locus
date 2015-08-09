@@ -21,6 +21,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.andexert.library.RippleView;
+import com.temnogrudova.locus.database.dbManager;
 
 import java.io.IOException;
 import java.util.List;
@@ -32,12 +33,14 @@ import java.util.Locale;
 public class DialogViewNotificationItem extends Fragment {
 
     public interface onNotificationItemEditClickListener {
-        public void onBackViewNotificationItem();
-        public void onEditNotification(NotificationItem notificationItem, String parent);
+        public void onBackViewNotificationItem(String parent);
+        public void onEditNotification(NotificationItem notificationItem, String parent, String sub);
     }
     onNotificationItemEditClickListener notificationItemEditClickListener;
 
     private Activity activity;
+    dbManager dbM;
+    Bundle bundle;
     private Integer isCheckedSwitchReminder = null;
     private View rootView;
     NotificationItem notificationItem = null;
@@ -58,7 +61,8 @@ public class DialogViewNotificationItem extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         rootView = inflater.inflate(R.layout.dialog_view_notification_item, container, false);
-        Bundle bundle = this.getArguments();
+        dbM = new dbManager(getActivity());
+        bundle = this.getArguments();
         notificationItem = new NotificationItem();
         notificationItem.setItemTitle(bundle.getString("title"));
         notificationItem.setItemReminder(bundle.getInt("reminder"));
@@ -86,7 +90,7 @@ public class DialogViewNotificationItem extends Fragment {
         rvBack.setOnRippleCompleteListener(new RippleView.OnRippleCompleteListener() {
             @Override
             public void onComplete(RippleView rippleView) {
-                notificationItemEditClickListener.onBackViewNotificationItem();
+                notificationItemEditClickListener.onBackViewNotificationItem(bundle.getString("parent"));
 
             }
         });
@@ -106,7 +110,7 @@ public class DialogViewNotificationItem extends Fragment {
         rvDelete.setOnRippleCompleteListener(new RippleView.OnRippleCompleteListener() {
             @Override
             public void onComplete(RippleView rippleView) {
-                MainActivity.dbM.delSelectedNotification(notificationItem.getItemTitle());
+                dbM.delSelectedNotification(notificationItem.getItemTitle());
                 getFragmentManager().popBackStack();
             }
         });
@@ -126,7 +130,8 @@ public class DialogViewNotificationItem extends Fragment {
         rvEdit.setOnRippleCompleteListener(new RippleView.OnRippleCompleteListener() {
             @Override
             public void onComplete(RippleView rippleView) {
-                notificationItemEditClickListener.onEditNotification(notificationItem, "view_notification");
+                String parent = bundle.getString("parent");
+                notificationItemEditClickListener.onEditNotification(notificationItem, parent, "view_notification");
                // getFragmentManager().popBackStack();
             }
         });
@@ -222,7 +227,7 @@ public class DialogViewNotificationItem extends Fragment {
             public boolean onKey(View v, int keyCode, KeyEvent event) {
 
                 if (event.getAction() == KeyEvent.ACTION_UP && keyCode == KeyEvent.KEYCODE_BACK){
-                    notificationItemEditClickListener.onBackViewNotificationItem();
+                    notificationItemEditClickListener.onBackViewNotificationItem(bundle.getString("parent"));
                     return true;
                 }
                 return false;
@@ -240,6 +245,12 @@ public class DialogViewNotificationItem extends Fragment {
         InputMethodManager inputMethodManager = (InputMethodManager) getActivity().getSystemService(Activity.INPUT_METHOD_SERVICE);
         inputMethodManager.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(), 0);
     }
-
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (dbM!=null) {
+            dbM.close();
+        }
+    }
 
 }

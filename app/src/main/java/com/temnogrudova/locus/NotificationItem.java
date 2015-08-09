@@ -1,14 +1,18 @@
 package com.temnogrudova.locus;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 /**
  * Created by 123 on 23.05.2015.
  */
-public class NotificationItem {
+public class NotificationItem implements Parcelable {
 
     private String itemTitle;
     private Integer itemReminder;
     private String itemLocation;
     private String itemNote;
+    private Integer itemActive;
     private String itemCategory;
 
     public String getItemTitle() {
@@ -39,6 +43,14 @@ public class NotificationItem {
         return itemNote;
     }
 
+    public Integer getItemActive() {
+        return itemActive;
+    }
+
+    public void setItemActive(Integer itemActive) {
+        this.itemActive = itemActive;
+    }
+
     public void setItemNote(String itemNote) {
         this.itemNote = itemNote;
     }
@@ -54,4 +66,13 @@ public class NotificationItem {
     public NotificationItem() {
     }
 
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+
+    }
 }

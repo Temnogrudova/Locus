@@ -12,11 +12,12 @@ import java.util.ArrayList;
 public class NotificationRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     public interface onNotificationItemClickListener {
-        public void onViewNotificationItem(NotificationItem title);
+        public void onViewNotificationItem(NotificationItem title, String parent);
     }
     onNotificationItemClickListener notificationItemClickListener;
    // ArrayList<RecyclerViewItem> mRecyclerViewList;
     ArrayList<NotificationItem> mNotificationDataArrayList;
+    String mParent;
     View view;
     Context context;
 
@@ -31,9 +32,10 @@ public class NotificationRecyclerAdapter extends RecyclerView.Adapter<RecyclerVi
         }
     }
 
-    public NotificationRecyclerAdapter( ArrayList<NotificationItem> notificationDataArrayList) {
+    public NotificationRecyclerAdapter( ArrayList<NotificationItem> notificationDataArrayList, String parent) {
       //  mRecyclerViewList = recyclerViewItemArrayList;
         mNotificationDataArrayList = notificationDataArrayList;
+        mParent = parent;
     }
 
     @Override
@@ -56,7 +58,7 @@ public class NotificationRecyclerAdapter extends RecyclerView.Adapter<RecyclerVi
             public void onClick(View v) {
                 for(NotificationItem notificationItem:mNotificationDataArrayList){
                     if (notificationItem.getItemTitle().equals(itemText)) {
-                        notificationItemClickListener.onViewNotificationItem(notificationItem);
+                        notificationItemClickListener.onViewNotificationItem(notificationItem, mParent);
                     }
                 }
                // notificationItemClickListener.onViewNotificationItem(mRecyclerViewList.get(position).getItemText());

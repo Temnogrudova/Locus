@@ -20,6 +20,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.andexert.library.RippleView;
+import com.temnogrudova.locus.database.dbManager;
 
 import java.util.ArrayList;
 
@@ -34,7 +35,7 @@ public class DialogViewCategoryItem extends Fragment {
     onCategoryItemEditClickListener categoryItemEditClickListener;
 
     private Activity activity;
-   // private String title = null;
+    dbManager dbM;
     private Integer isCheckedSwitchReminder = null;
     private Integer isCheckedSwitchShowOnMap = null;
     private View rootView;
@@ -55,7 +56,7 @@ public class DialogViewCategoryItem extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         rootView = inflater.inflate(R.layout.dialog_view_category_item, container, false);
-
+        dbM = new dbManager(getActivity());
         Bundle bundle = this.getArguments();
         categoryItem = new CategoryItem();
         categoryItem.setItemTitle(bundle.getString("title"));
@@ -90,14 +91,15 @@ public class DialogViewCategoryItem extends Fragment {
 
     private void updateCategoryNotificationsRecyclerView() {
         ArrayList<NotificationItem> categoryNotificationsDataArrayList = new ArrayList<NotificationItem>();
-        categoryNotificationsDataArrayList = MainActivity.dbM.getCategoryNotificationsItems(categoryItem.getItemTitle());
+        categoryNotificationsDataArrayList = dbM.getCategoryNotificationsItems(categoryItem.getItemTitle());
 
-        for(int i = 0; i<categoryNotificationsDataArrayList.size();i++){
-            categoryNotificationsDataArrayList.get(i).setItemCategory(categoryItem.getItemTitle());
+        if (categoryNotificationsDataArrayList!= null){
+            for (int i = 0; i < categoryNotificationsDataArrayList.size(); i++) {
+                categoryNotificationsDataArrayList.get(i).setItemCategory(categoryItem.getItemTitle());
+            }
         }
-
         if (!(categoryNotificationsDataArrayList==null)) {
-            NotificationRecyclerAdapter categoryNotificationsRecyclerAdapter = new NotificationRecyclerAdapter(categoryNotificationsDataArrayList);
+            NotificationRecyclerAdapter categoryNotificationsRecyclerAdapter = new NotificationRecyclerAdapter(categoryNotificationsDataArrayList, "list");
             recyclerView.setAdapter(categoryNotificationsRecyclerAdapter);
         }
     }
@@ -129,12 +131,12 @@ public class DialogViewCategoryItem extends Fragment {
             public void onComplete(RippleView rippleView) {
 
                 ArrayList<NotificationItem> categoryNotificationsItems = new ArrayList<NotificationItem>();
-                categoryNotificationsItems = MainActivity.dbM.getCategoryNotificationsItems(categoryItem.getItemTitle());
+                categoryNotificationsItems = dbM.getCategoryNotificationsItems(categoryItem.getItemTitle());
                 for(int i =0; i<categoryNotificationsItems.size();i++){
                     categoryNotificationsItems.get(i).setItemCategory(null);
-                    MainActivity.dbM.updSelectedNotification(categoryNotificationsItems.get(i).getItemTitle(),categoryNotificationsItems.get(i));
+                    dbM.updSelectedNotification(categoryNotificationsItems.get(i).getItemTitle(),categoryNotificationsItems.get(i));
                 }
-                MainActivity.dbM.delSelectedCategory(categoryItem.getItemTitle());
+                dbM.delSelectedCategory(categoryItem.getItemTitle());
                 getFragmentManager().popBackStack();
             }
         });
@@ -276,4 +278,11 @@ public class DialogViewCategoryItem extends Fragment {
         inputMethodManager.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(), 0);
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (dbM!=null) {
+            dbM.close();
+        }
+    }
 }
